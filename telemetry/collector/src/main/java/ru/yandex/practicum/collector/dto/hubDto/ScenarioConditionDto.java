@@ -1,4 +1,4 @@
-package hubDto;
+package ru.yandex.practicum.collector.dto.hubDto;
 
 import lombok.AccessLevel;
 import lombok.Data;
@@ -6,8 +6,9 @@ import lombok.experimental.FieldDefaults;
 
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DeviceActionDto {
+public class ScenarioConditionDto {
 	String sensorId;
 	String type;
-	Integer value;
+	String operation;
+	Object value;
 }

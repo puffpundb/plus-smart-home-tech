@@ -1,4 +1,4 @@
-package sensorDto;
+package ru.yandex.practicum.collector.dto.sensorDto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -6,18 +6,21 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldDefaults;
 
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @EqualsAndHashCode(callSuper = true)
 @Data
-@FieldDefaults(level = AccessLevel.PRIVATE)
-public class TemperatureSensorEventDto extends SensorEventDto {
+public class MotionSensorEventDto extends SensorEventDto {
 	@NotNull
-	Integer temperatureC;
+	Integer linkQuality;
 
 	@NotNull
-	Integer temperatureF;
+	Boolean motion;
+
+	@NotNull
+	Integer voltage;
 
 	@Override
 	public SensorEventType getType() {
-		return SensorEventType.TEMPERATURE_SENSOR_EVENT;
+		return SensorEventType.MOTION_SENSOR_EVENT;
 	}
 }

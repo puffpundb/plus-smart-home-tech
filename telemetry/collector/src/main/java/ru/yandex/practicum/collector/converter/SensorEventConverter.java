@@ -1,42 +1,43 @@
-package converter;
+package ru.yandex.practicum.collector.converter;
 
-import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
-import sensorDto.*;
+import ru.yandex.practicum.collector.dto.sensorDto.*;
+import ru.yandex.practicum.kafka.telemetry.event.*;
+
 
 public class SensorEventConverter {
-	public SensorEventAvro convert(SensorEventDto dto) {
+	public static SensorEventAvro convertToAvro(SensorEventDto dto) {
 		SensorEventAvro avro = new SensorEventAvro();
 		avro.setId(dto.getId());
 		avro.setHubId(dto.getHubId());
 		avro.setTimestamp(dto.getTimestamp().toEpochMilli());
 
 		if (dto instanceof ClimateSensorEventDto climateSensorEventDto) {
-			ClimateSensorEventDto payload = new ClimateSensorEventDto();
+			ClimateSensorAvro payload = new ClimateSensorAvro();
 			payload.setTemperatureC(climateSensorEventDto.getTemperatureC());
 			payload.setHumidity(climateSensorEventDto.getHumidity());
 			payload.setCo2Level(climateSensorEventDto.getCo2Level());
 
 			avro.setPayload(payload);
-		} else if (dto instanceof LightSensorEventDto lighSensorEventDto) {
-			LightSensorEventDto payload = new LightSensorEventDto();
-			payload.setLinkQuality(lighSensorEventDto.getLinkQuality());
-			payload.setLuminosity(lighSensorEventDto.getLuminosity());
+		} else if (dto instanceof LightSensorEventDto lightSensorEventDto) {
+			LightSensorAvro payload = new LightSensorAvro();
+			payload.setLinkQuality(lightSensorEventDto.getLinkQuality());
+			payload.setLuminosity(lightSensorEventDto.getLuminosity());
 
 			avro.setPayload(payload);
 		} else if (dto instanceof MotionSensorEventDto motionSensorEventDto) {
-			MotionSensorEventDto payload = new MotionSensorEventDto();
+			MotionSensorAvro payload = new MotionSensorAvro();
 			payload.setLinkQuality(motionSensorEventDto.getLinkQuality());
 			payload.setMotion(motionSensorEventDto.getMotion());
 			payload.setVoltage(motionSensorEventDto.getVoltage());
 
 			avro.setPayload(payload);
 		} else if (dto instanceof SwitchSensorEventDto switchSensorEventDto) {
-			SwitchSensorEventDto payload = new SwitchSensorEventDto();
+			SwitchSensorAvro payload = new SwitchSensorAvro();
 			payload.setState(switchSensorEventDto.getState());
 
 			avro.setPayload(payload);
 		} else if (dto instanceof TemperatureSensorEventDto temperatureSensorEventDto) {
-			TemperatureSensorEventDto payload = new TemperatureSensorEventDto();
+			TemperatureSensorAvro payload = new TemperatureSensorAvro();
 			payload.setTemperatureC(temperatureSensorEventDto.getTemperatureC());
 			payload.setTemperatureF(temperatureSensorEventDto.getTemperatureF());
 

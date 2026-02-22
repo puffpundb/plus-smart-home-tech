@@ -1,6 +1,5 @@
-package sensorDto;
+package ru.yandex.practicum.collector.dto.sensorDto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package hubDto;
+package ru.yandex.practicum.collector.dto.hubDto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,6 +24,6 @@ public class ScenarioAddedEventDto extends HubEventDto {
 
 	@Override
 	public HubEventType getType() {
-		return HubEventType.SCENARIO_ADDED_EVENT;
+		return HubEventType.SCENARIO_ADDED;
 	}
 }

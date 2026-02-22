@@ -1,13 +1,14 @@
-package converter;
+package ru.yandex.practicum.collector.converter;
 
-import hubDto.*;
+import ru.yandex.practicum.collector.dto.hubDto.*;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class HubEventConverter {
-	public HubEventAvro convert(HubEventDto dto) {
+	public static HubEventAvro convertToAvro(HubEventDto dto) {
 		HubEventAvro avro = new HubEventAvro();
 		avro.setHubId(dto.getHubId());
 		avro.setTimestamp(dto.getTimestamp().toEpochMilli());
@@ -15,7 +16,7 @@ public class HubEventConverter {
 		if (dto instanceof DeviceAddedEventDto deviceAddedEventDto) {
 			DeviceAddedEventAvro payload = new DeviceAddedEventAvro();
 			payload.setId(deviceAddedEventDto.getId());
-			payload.setType(DeviceTypeAvro.valueOf(deviceAddedEventDto.getType().name()));
+			payload.setDeviceType(DeviceTypeAvro.valueOf(deviceAddedEventDto.getDeviceType()));
 
 			avro.setPayload(payload);
 		} else if (dto instanceof DeviceRemovedEventDto deviceRemovedEventDto) {

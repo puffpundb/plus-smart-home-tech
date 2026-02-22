@@ -1,4 +1,4 @@
-package hubDto;
+package ru.yandex.practicum.collector.dto.hubDto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
@@ -9,12 +9,15 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class DeviceRemovedEventDto extends HubEventDto {
+public class DeviceAddedEventDto extends HubEventDto {
 	@NotBlank
 	String id;
 
+	@NotBlank
+	String deviceType;
+
 	@Override
 	public HubEventType getType() {
-		return HubEventType.DEVICE_REMOVED_EVENT;
+		return HubEventType.DEVICE_ADDED;
 	}
 }

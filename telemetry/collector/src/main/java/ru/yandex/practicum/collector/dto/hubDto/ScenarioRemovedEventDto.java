@@ -1,4 +1,4 @@
-package hubDto;
+package ru.yandex.practicum.collector.dto.hubDto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
@@ -15,6 +15,6 @@ public class ScenarioRemovedEventDto extends HubEventDto {
 
 	@Override
 	public HubEventType getType() {
-		return HubEventType.SCENARIO_REMOVED_EVENT;
+		return HubEventType.SCENARIO_REMOVED;
 	}
 }

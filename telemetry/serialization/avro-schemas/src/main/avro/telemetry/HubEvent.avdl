@@ -32,7 +32,7 @@ protocol HubEventProtocol {
 
     record DeviceAddedEventAvro {
         string id;
-        DeviceTypeAvro type;
+        DeviceTypeAvro device_type;
     }
 
     record DeviceRemovedEventAvro {

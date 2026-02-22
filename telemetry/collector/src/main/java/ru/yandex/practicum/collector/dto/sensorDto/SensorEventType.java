@@ -1,4 +1,4 @@
-package sensorDto;
+package ru.yandex.practicum.collector.dto.sensorDto;
 
 public enum SensorEventType {
 	CLIMATE_SENSOR_EVENT,

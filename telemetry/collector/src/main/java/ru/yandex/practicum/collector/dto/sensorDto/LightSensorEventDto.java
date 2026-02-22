@@ -1,4 +1,4 @@
-package sensorDto;
+package ru.yandex.practicum.collector.dto.sensorDto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -7,20 +7,17 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.FieldDefaults;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class MotionSensorEventDto extends SensorEventDto {
+@EqualsAndHashCode(callSuper = true)
+public class LightSensorEventDto extends SensorEventDto {
 	@NotNull
 	Integer linkQuality;
 
 	@NotNull
-	Boolean motion;
-
-	@NotNull
-	Integer voltage;
+	Integer luminosity;
 
 	@Override
 	public SensorEventType getType() {
-		return SensorEventType.MOTION_SENSOR_EVENT;
+		return SensorEventType.LIGHT_SENSOR_EVENT;
 	}
 }
