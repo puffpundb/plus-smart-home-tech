@@ -1,17 +1,18 @@
 package serializer;
 
+import org.apache.avro.Schema;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Serializer;
-import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
-public class SensorEventAvroSerializer implements Serializer<SensorEventAvro> {
+public class CommonSerializer implements Serializer<SpecificRecordBase> {
 	private final EncoderFactory encoderFactory = EncoderFactory.get();
 
 	@Override
@@ -20,24 +21,25 @@ public class SensorEventAvroSerializer implements Serializer<SensorEventAvro> {
 	}
 
 	@Override
-	public byte[] serialize(String s, SensorEventAvro sensorEventAvro) {
-		if (sensorEventAvro == null) return null;
+	public byte[] serialize(String topic, SpecificRecordBase specificRecordBase) {
+		if (specificRecordBase == null) return null;
 
 		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 			BinaryEncoder encoder = encoderFactory.binaryEncoder(outputStream, null);
-			SpecificDatumWriter<SensorEventAvro> datumWriter = new SpecificDatumWriter<>(SensorEventAvro.class);
+			Schema schema = specificRecordBase.getSchema();
+			SpecificDatumWriter<SpecificRecordBase> datumWriter = new SpecificDatumWriter<>(schema);
 
-			datumWriter.write(sensorEventAvro, encoder);
+			datumWriter.write(specificRecordBase, encoder);
 			encoder.flush();
 
 			return outputStream.toByteArray();
 		} catch (IOException e) {
-			throw new RuntimeException("Ошибка сериализации SensorEventAvro", e);
+			throw new RuntimeException("Ошибка сериализации. topic: " + topic + ", exception: " + e);
 		}
 	}
 
 	@Override
-	public byte[] serialize(String topic, Headers headers, SensorEventAvro data) {
+	public byte[] serialize(String topic, Headers headers, SpecificRecordBase data) {
 		return Serializer.super.serialize(topic, headers, data);
 	}
 
