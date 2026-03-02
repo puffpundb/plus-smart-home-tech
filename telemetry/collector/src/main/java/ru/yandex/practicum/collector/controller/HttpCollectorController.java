@@ -14,7 +14,7 @@ import ru.yandex.practicum.collector.service.CollectorService;
 @RequiredArgsConstructor
 @RestController
 @Slf4j
-public class CollectorController {
+public class HttpCollectorController {
 	private final CollectorService service;
 
 	@PostMapping("/events/sensors")
