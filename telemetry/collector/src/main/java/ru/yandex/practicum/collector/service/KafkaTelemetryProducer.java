@@ -3,7 +3,6 @@ package ru.yandex.practicum.collector.service;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
-import org.apache.kafka.clients.Metadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -11,8 +10,6 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import serializer.CommonSerializer;
 
 import java.util.Properties;
@@ -21,8 +18,8 @@ import java.util.Properties;
 @Service
 public class KafkaTelemetryProducer {
 	private final KafkaProducer<String, SpecificRecordBase> producer;
-	private final String sensorTopic;
-	private final String hubTopic;
+	private final String TOPIC_SENSORS;
+	private final String TOPIC_HUB;
 
 	public KafkaTelemetryProducer(@Value("${kafka.bootstrap-servers}") String bootstrapServers,
 								  @Value("${kafka.topics.sensors}") String sensorTopic,
@@ -34,19 +31,19 @@ public class KafkaTelemetryProducer {
 		props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, CommonSerializer.class.getName());
 
 		this.producer = new KafkaProducer<>(props);
-		this.sensorTopic = sensorTopic;
-		this.hubTopic = hubTopic;
+		this.TOPIC_SENSORS = sensorTopic;
+		this.TOPIC_HUB = hubTopic;
 	}
 
 	public void sendSensor(SpecificRecordBase e) {
-		ProducerRecord<String, SpecificRecordBase> rec = new ProducerRecord<>(sensorTopic, e);
+		ProducerRecord<String, SpecificRecordBase> rec = new ProducerRecord<>(TOPIC_SENSORS, e);
 		log.info("KafkaTelemetryProducer: record - {}", rec);
 
 		producer.send(rec, this::logCallback);
 	}
 
 	public void sendHub(SpecificRecordBase h) {
-		ProducerRecord<String, SpecificRecordBase> rec = new ProducerRecord<>(hubTopic, h);
+		ProducerRecord<String, SpecificRecordBase> rec = new ProducerRecord<>(TOPIC_HUB, h);
 		log.info("KafkaTelemetryProducer: record - {}", rec);
 
 		producer.send(rec, this::logCallback);

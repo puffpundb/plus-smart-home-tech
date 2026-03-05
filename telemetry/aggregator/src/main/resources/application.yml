@@ -1,0 +1,20 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: aggregator-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.VoidDeserializer
+      value-deserializer: ru.yandex.practicum.aggregator.deserializer.SensorEventDeserializer
+      max-poll-records: 100
+      max-poll-interval-ms: 300000
+      fetch-max-bytes: 3072000
+      max-partition-fetch-bytes: 307200
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+
+kafka:
+  topics:
+    sensors: telemetry.sensors.v1
+    snapshots: telemetry.snapshots.v1
