@@ -1,0 +1,41 @@
+server:
+  port: 8083
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/analyzer_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      snapshot-group-id: analyzer-snapshots-group
+      snapshot:
+        auto-offset-reset: earliest
+        max-poll-records: 100
+      hub-event-group-id: analyzer-hub-events-group
+      hub-event:
+        auto-offset-reset: earliest
+        max-poll-records: 10
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+kafka:
+  topics:
+    snapshots: telemetry.snapshots.v1
+    hub-events: telemetry.hubs.v1
+
+grpc:
+  client:
+    hub-router:
+      address: 'static://localhost:59090'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
