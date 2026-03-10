@@ -1,14 +1,16 @@
 package ru.yandex.practicum.aggregator.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.Schema;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.apache.kafka.common.serialization.VoidDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.aggregator.deserializer.SensorEventDeserializer;
@@ -48,17 +50,17 @@ public class AggregationStarter {
 	}
 
 	public void start() {
-		KafkaConsumer<Void, SensorEventAvro> consumer = createConsumer();
+		KafkaConsumer<String, SensorEventAvro> consumer = createConsumer();
 		KafkaProducer<String, SensorsSnapshotAvro> producer = createProducer();
 
 		try {
 			consumer.subscribe(Collections.singletonList(TOPIC_SENSORS));
 
 			while (true) {
-				ConsumerRecords<Void, SensorEventAvro> records = consumer.poll(POLL_TIMEOUT);
+				ConsumerRecords<String, SensorEventAvro> records = consumer.poll(POLL_TIMEOUT);
 
 				int count = 0;
-				for (ConsumerRecord<Void, SensorEventAvro> record : records) {
+				for (ConsumerRecord<String, SensorEventAvro> record : records) {
 					SensorEventAvro event = record.value();
 					Optional<SensorsSnapshotAvro> updatedSnapshot = updateState(event);
 
@@ -86,11 +88,11 @@ public class AggregationStarter {
 		}
 	}
 
-	private KafkaConsumer<Void, SensorEventAvro> createConsumer() {
+	private KafkaConsumer<String, SensorEventAvro> createConsumer() {
 		Properties props = new Properties();
 		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 		props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, VoidDeserializer.class.getName());
+		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, SensorEventDeserializer.class.getName());
 		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 		props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "100");
@@ -108,7 +110,7 @@ public class AggregationStarter {
 		return new KafkaProducer<>(props);
 	}
 
-	private void manageOffsets(ConsumerRecord<Void, SensorEventAvro> record, int count, KafkaConsumer<Void, SensorEventAvro> consumer) {
+	private void manageOffsets(ConsumerRecord<String, SensorEventAvro> record, int count, KafkaConsumer<String, SensorEventAvro> consumer) {
 		TopicPartition partition = new TopicPartition(record.topic(), record.partition());
 		OffsetAndMetadata offset = new OffsetAndMetadata(record.offset() + 1);
 		currentOffsets.put(partition, offset);
@@ -140,7 +142,7 @@ public class AggregationStarter {
 		SensorStateAvro oldState = sensorsState.get(sensorId);
 
 		if (oldState != null) {
-			if (oldState.getTimestamp().toEpochMilli() >= event.getTimestamp()) {
+			if (oldState.getTimestamp().toEpochMilli() > event.getTimestamp()) {
 				return Optional.empty();
 			}
 
@@ -169,12 +171,28 @@ public class AggregationStarter {
 	}
 
 	private boolean isDataEqual(Object data1, Object data2) {
-		if (data1 == null && data2 == null) {
+		if (data1 == null && data2 == null) return true;
+		if (data1 == null || data2 == null) return false;
+
+		if (!data1.getClass().equals(data2.getClass())) return false;
+
+		if (data1 instanceof SpecificRecordBase && data2 instanceof SpecificRecordBase) {
+			SpecificRecordBase r1 = (SpecificRecordBase) data1;
+			SpecificRecordBase r2 = (SpecificRecordBase) data2;
+
+			Schema schema = r1.getSchema();
+			for (Schema.Field field : schema.getFields()) {
+				int pos = field.pos();
+				Object f1 = r1.get(pos);
+				Object f2 = r2.get(pos);
+
+				if (!Objects.equals(f1, f2)) {
+					return false;
+				}
+			}
 			return true;
 		}
-		if (data1 == null || data2 == null) {
-			return false;
-		}
+
 		return data1.equals(data2);
 	}
 }

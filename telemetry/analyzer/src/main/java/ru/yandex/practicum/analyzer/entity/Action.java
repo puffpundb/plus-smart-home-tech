@@ -17,7 +17,8 @@ public class Action {
 	private Long id;
 
 	@Column(name = "type")
-	private String type;
+	@Enumerated(EnumType.STRING)
+	private ActionType type;
 
 	@Column(name = "value")
 	private Integer value;

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.yandex.practicum.analyzer.entity.enums.ConditionType;
+import ru.yandex.practicum.analyzer.entity.enums.Operation;
 
 @Entity
 @Table(name = "conditions")
@@ -16,10 +18,12 @@ public class Condition {
 	private Long id;
 
 	@Column(name = "type")
-	private String type;
+	@Enumerated(EnumType.STRING)
+	private ConditionType type;
 
 	@Column(name = "operation")
-	private String operation;
+	@Enumerated(EnumType.STRING)
+	private Operation operation;;
 
 	@Column(name = "value")
 	private Integer value;

@@ -4,7 +4,7 @@ spring:
     consumer:
       group-id: aggregator-group
       auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.VoidDeserializer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: ru.yandex.practicum.aggregator.deserializer.SensorEventDeserializer
       max-poll-records: 100
       max-poll-interval-ms: 300000
@@ -12,7 +12,7 @@ spring:
       max-partition-fetch-bytes: 307200
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      value-serializer: serializer.CommonSerializer
 
 kafka:
   topics:

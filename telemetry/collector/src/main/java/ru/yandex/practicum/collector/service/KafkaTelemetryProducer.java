@@ -21,9 +21,9 @@ public class KafkaTelemetryProducer {
 	private final String TOPIC_SENSORS;
 	private final String TOPIC_HUB;
 
-	public KafkaTelemetryProducer(@Value("${kafka.bootstrap-servers}") String bootstrapServers,
-								  @Value("${kafka.topics.sensors}") String sensorTopic,
-								  @Value("${kafka.topics.hubs}") String hubTopic) {
+	public KafkaTelemetryProducer(@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
+								  @Value("${spring.kafka.topics.sensors}") String sensorTopic,
+								  @Value("${spring.kafka.topics.hubs}") String hubTopic) {
 
 		Properties props = new Properties();
 		props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);

@@ -4,88 +4,183 @@ import com.google.protobuf.Empty;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.service.GrpcService;
+import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import ru.yandex.practicum.grpc.telemetry.collector.CollectorControllerGrpc;
-import ru.yandex.practicum.grpc.telemetry.event.*;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.ScenarioConditionProto;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
+import ru.yandex.practicum.kafka.telemetry.event.*;
 
-@GrpcService
+import java.util.ArrayList;
+
 @Slf4j
+@GrpcService
+@RequiredArgsConstructor
 public class GrpcCollectorController extends CollectorControllerGrpc.CollectorControllerImplBase {
-	@Override
-	public void collectHubEvent(HubEventProto request, StreamObserver<Empty> responseObserver) {
-		try {
-			log.info("Получено событие хаба: {}", request);
 
-			switch (request.getPayloadCase()) {
-				case DEVICE_ADDED -> {
-					DeviceAddedEventProto event = request.getDeviceAdded();
-					log.info("Устройство добавлено: id={}, type={}", event.getId(), event.getType());
-				}
-				case DEVICE_REMOVED -> {
-					DeviceRemovedEventProto event = request.getDeviceRemoved();
-					log.info("Устройство удалено: id={}", event.getId());
-				}
-				case SCENARIO_ADDED -> {
-					ScenarioAddedEventProto event = request.getScenarioAdded();
-					log.info("Сценарий добавлен: name={}", event.getName());
-				}
-				case SCENARIO_REMOVED -> {
-					ScenarioRemovedEventProto event = request.getScenarioRemoved();
-					log.info("Сценарий удалён: name={}", event.getName());
-				}
-				default -> log.warn("Неизвестный тип события хаба: {}", request.getPayloadCase());
-			}
-
-			responseObserver.onNext(Empty.getDefaultInstance());
-			responseObserver.onCompleted();
-		} catch (Exception e) {
-			generateError(e, responseObserver);
-		}
-	}
+	private final KafkaProducer<String, SpecificRecordBase> kafkaProducer;
 
 	@Override
 	public void collectSensorEvent(SensorEventProto request, StreamObserver<Empty> responseObserver) {
 		try {
-			log.info("Получено событие датчика: {}", request);
+			log.info("Получено событие датчика: sensorId={}, hubId={}", request.getId(), request.getHubId());
+
+			SensorEventAvro avro = new SensorEventAvro();
+			avro.setId(request.getId());
+			avro.setHubId(request.getHubId());
+			avro.setTimestamp(request.getTimestamp().getSeconds() * 1000L + request.getTimestamp().getNanos() / 1_000_000);
 
 			switch (request.getPayloadCase()) {
-				case MOTION_SENSOR -> {
-					MotionSensorProto sensor = request.getMotionSensor();
-					log.info("Датчик движения: motion={}, voltage={}",
-							sensor.getMotion(), sensor.getVoltage());
-				}
-				case TEMPERATURE_SENSOR -> {
-					TemperatureSensorProto sensor = request.getTemperatureSensor();
-					log.info("Датчик температуры: C={}, F={}",
-							sensor.getTemperatureC(), sensor.getTemperatureF());
-				}
-				case LIGHT_SENSOR -> {
-					LightSensorProto sensor = request.getLightSensor();
-					log.info("Датчик освещения: luminosity={}", sensor.getLuminosity());
-				}
-				case CLIMATE_SENSOR -> {
-					ClimateSensorProto sensor = request.getClimateSensor();
-					log.info("Климатический датчик: temp={}, humidity={}, co2={}",
-							sensor.getTemperatureC(), sensor.getHumidity(), sensor.getCo2Level());
-				}
-				case SWITCH_SENSOR -> {
-					SwitchSensorProto sensor = request.getSwitchSensor();
-					log.info("Переключатель: state={}", sensor.getState());
-				}
-				default -> log.warn("Неизвестный тип события: {}", request.getPayloadCase());
+				case MOTION_SENSOR:
+					MotionSensorAvro motionAvro = new MotionSensorAvro();
+					motionAvro.setLinkQuality(request.getMotionSensor().getLinkQuality());
+					motionAvro.setMotion(request.getMotionSensor().getMotion());
+					motionAvro.setVoltage(request.getMotionSensor().getVoltage());
+					avro.setPayload(motionAvro);
+					break;
+				case TEMPERATURE_SENSOR:
+					TemperatureSensorAvro tempAvro = new TemperatureSensorAvro();
+					tempAvro.setTemperatureC(request.getTemperatureSensor().getTemperatureC());
+					tempAvro.setTemperatureF(request.getTemperatureSensor().getTemperatureF());
+					avro.setPayload(tempAvro);
+					break;
+				case LIGHT_SENSOR:
+					LightSensorAvro lightAvro = new LightSensorAvro();
+					lightAvro.setLinkQuality(request.getLightSensor().getLinkQuality());
+					lightAvro.setLuminosity(request.getLightSensor().getLuminosity());
+					avro.setPayload(lightAvro);
+					break;
+				case CLIMATE_SENSOR:
+					ClimateSensorAvro climateAvro = new ClimateSensorAvro();
+					climateAvro.setTemperatureC(request.getClimateSensor().getTemperatureC());
+					climateAvro.setHumidity(request.getClimateSensor().getHumidity());
+					climateAvro.setCo2Level(request.getClimateSensor().getCo2Level());
+					avro.setPayload(climateAvro);
+					break;
+				case SWITCH_SENSOR:
+					SwitchSensorAvro switchAvro = new SwitchSensorAvro();
+					switchAvro.setState(request.getSwitchSensor().getState());
+					avro.setPayload(switchAvro);
+					break;
+				case PAYLOAD_NOT_SET:
+				default:
+					avro.setPayload(null);
+					break;
 			}
+
+			ProducerRecord<String, SpecificRecordBase> record =
+					new ProducerRecord<>("telemetry.sensors.v1", request.getId(), avro);
+			kafkaProducer.send(record);
+
+			log.info("Событие датчика отправлено в Kafka: sensorId={}", request.getId());
 
 			responseObserver.onNext(Empty.getDefaultInstance());
 			responseObserver.onCompleted();
 		} catch (Exception e) {
-			generateError(e, responseObserver);
+			log.error("Ошибка при обработке события датчика: sensorId={}", request.getId(), e);
+			responseObserver.onError(new StatusRuntimeException(
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)));
 		}
 	}
 
-	private void generateError(Exception e, StreamObserver<Empty> responseObserver) {
-		responseObserver.onError(new StatusRuntimeException(Status.INTERNAL
-				.withDescription(e.getLocalizedMessage())
-				.withCause(e)));
+	@Override
+	public void collectHubEvent(HubEventProto request, StreamObserver<Empty> responseObserver) {
+		try {
+			log.info("Получено событие хаба: hubId={}, type={}", request.getHubId(), request.getPayloadCase());
+
+			HubEventAvro avro = new HubEventAvro();
+			avro.setHubId(request.getHubId());
+			avro.setTimestamp(request.getTimestamp().getSeconds() * 1000L + request.getTimestamp().getNanos() / 1_000_000);
+
+			switch (request.getPayloadCase()) {
+				case DEVICE_ADDED:
+					DeviceAddedEventAvro deviceAddedAvro = new DeviceAddedEventAvro();
+					deviceAddedAvro.setId(request.getDeviceAdded().getId());
+					deviceAddedAvro.setDeviceType(DeviceTypeAvro.valueOf(request.getDeviceAdded().getType().name()));
+					avro.setPayload(deviceAddedAvro);
+					break;
+				case DEVICE_REMOVED:
+					DeviceRemovedEventAvro deviceRemovedAvro = new DeviceRemovedEventAvro();
+					deviceRemovedAvro.setId(request.getDeviceRemoved().getId());
+					avro.setPayload(deviceRemovedAvro);
+					break;
+				case SCENARIO_ADDED:
+					ScenarioAddedEventAvro scenarioAddedAvro = new ScenarioAddedEventAvro();
+					scenarioAddedAvro.setName(request.getScenarioAdded().getName());
+					scenarioAddedAvro.setConditions(new ArrayList<>());
+					scenarioAddedAvro.setActions(new ArrayList<>());
+
+					for (ScenarioConditionProto conditionProto : request.getScenarioAdded().getConditionList()) {
+						ScenarioConditionAvro conditionAvro = new ScenarioConditionAvro();
+						conditionAvro.setSensorId(conditionProto.getSensorId());
+						conditionAvro.setType(ConditionTypeAvro.valueOf(conditionProto.getType().name()));
+						conditionAvro.setOperation(ConditionOperationAvro.valueOf(conditionProto.getOperation().name()));
+
+						switch (conditionProto.getValueCase()) {
+							case BOOL_VALUE:
+								conditionAvro.setValue(conditionProto.getBoolValue());
+								break;
+							case INT_VALUE:
+								conditionAvro.setValue(conditionProto.getIntValue());
+								break;
+							case VALUE_NOT_SET:
+							default:
+								conditionAvro.setValue(null);
+								break;
+						}
+
+						scenarioAddedAvro.getConditions().add(conditionAvro);
+					}
+
+					for (DeviceActionProto actionProto : request.getScenarioAdded().getActionList()) {
+						DeviceActionAvro actionAvro = new DeviceActionAvro();
+						actionAvro.setSensorId(actionProto.getSensorId());
+						actionAvro.setType(ActionTypeAvro.valueOf(actionProto.getType().name()));
+
+						if (actionProto.hasValue()) {
+							actionAvro.setValue(actionProto.getValue());
+						} else {
+							actionAvro.setValue(null);
+						}
+
+						scenarioAddedAvro.getActions().add(actionAvro);
+					}
+
+					avro.setPayload(scenarioAddedAvro);
+					break;
+				case SCENARIO_REMOVED:
+					ScenarioRemovedEventAvro scenarioRemovedAvro = new ScenarioRemovedEventAvro();
+					scenarioRemovedAvro.setName(request.getScenarioRemoved().getName());
+					avro.setPayload(scenarioRemovedAvro);
+					break;
+				case PAYLOAD_NOT_SET:
+				default:
+					avro.setPayload(null);
+					break;
+			}
+
+			ProducerRecord<String, SpecificRecordBase> record =
+					new ProducerRecord<>("telemetry.hubs.v1", request.getHubId(), avro);
+			kafkaProducer.send(record);
+
+			log.info("Событие хаба отправлено в Kafka: hubId={}", request.getHubId());
+
+			responseObserver.onNext(Empty.getDefaultInstance());
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.error("Ошибка при обработке события хаба: hubId={}", request.getHubId(), e);
+			responseObserver.onError(new StatusRuntimeException(
+					Status.INTERNAL
+							.withDescription(e.getLocalizedMessage())
+							.withCause(e)));
+		}
 	}
 }
