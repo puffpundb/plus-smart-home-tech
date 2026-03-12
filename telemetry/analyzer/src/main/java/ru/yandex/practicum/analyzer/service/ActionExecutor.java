@@ -50,7 +50,6 @@ public class ActionExecutor {
 		} catch (Exception e) {
 			log.error("Ошибка при выполнении действия: hubId={}, scenario={}, error={}",
 					hubId, scenarioName, e.getMessage());
-			throw new RuntimeException("Не удалось выполнить действие", e);
 		}
 	}
 

@@ -5,9 +5,11 @@ spring:
       group-id: aggregator-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: ru.yandex.practicum.aggregator.deserializer.SensorEventDeserializer
+      value-deserializer: deserializer.SensorEventDeserializer
       max-poll-records: 100
       max-poll-interval-ms: 300000
+      poll-timeout: 1
+      commit-interval: 10
       fetch-max-bytes: 3072000
       max-partition-fetch-bytes: 307200
     producer:

@@ -13,7 +13,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.aggregator.deserializer.SensorEventDeserializer;
+import deserializer.SensorEventDeserializer;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorStateAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
@@ -33,20 +33,46 @@ public class AggregationStarter {
 	private final String bootstrapServers;
 	private final String groupId;
 
-	private final Duration POLL_TIMEOUT = Duration.ofSeconds(1);
+	private final String keyDeserializer;
+	private final String valueDeserializer;
+	private final String autoOffsetReset;
+	private final String maxPollRecords;
+	private final String maxPollIntervalMs;
+	private final String fetchMaxBytes;
+	private final String maxPartitionFetchBytes;
+
+	private final Duration POLL_TIMEOUT;
 	private final String TOPIC_SENSORS;
 	private final String TOPIC_SNAPSHOTS;
-	private final int COMMIT_INTERVAL = 10;
+	private final int COMMIT_INTERVAL;
 
 	public AggregationStarter(
 			@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
 			@Value("${spring.kafka.consumer.group-id}") String groupId,
+			@Value("${spring.kafka.consumer.key-deserializer}") String keyDeserializer,
+			@Value("${spring.kafka.consumer.value-deserializer}") String valueDeserializer,
+			@Value("${spring.kafka.consumer.auto-offset-reset}") String autoOffsetReset,
+			@Value("${spring.kafka.consumer.max-poll-records}") String maxPollRecords,
+			@Value("${spring.kafka.consumer.max-poll-interval-ms}") String maxPollIntervalMs,
+			@Value("${spring.kafka.consumer.fetch-max-bytes}") String fetchMaxBytes,
+			@Value("${spring.kafka.consumer.max-partition-fetch-bytes}") String maxPartitionFetchBytes,
 			@Value("${kafka.topics.sensors}") String topicSensors,
-			@Value("${kafka.topics.snapshots}") String topicSnapshots) {
+			@Value("${kafka.topics.snapshots}") String topicSnapshots,
+			@Value("${spring.kafka.consumer.poll-timeout:1}") int pollTimeout,
+			@Value("${spring.kafka.consumer.commit-interval:10}") int commitInterval) {
 		this.bootstrapServers = bootstrapServers;
 		this.groupId = groupId;
+		this.keyDeserializer = keyDeserializer;
+		this.valueDeserializer = valueDeserializer;
+		this.autoOffsetReset = autoOffsetReset;
+		this.maxPollRecords = maxPollRecords;
+		this.maxPollIntervalMs = maxPollIntervalMs;
+		this.fetchMaxBytes = fetchMaxBytes;
+		this.maxPartitionFetchBytes = maxPartitionFetchBytes;
 		this.TOPIC_SENSORS = topicSensors;
 		this.TOPIC_SNAPSHOTS = topicSnapshots;
+		this.POLL_TIMEOUT = Duration.ofSeconds(pollTimeout);
+		this.COMMIT_INTERVAL = commitInterval;
 	}
 
 	public void start() {
@@ -67,8 +93,15 @@ public class AggregationStarter {
 					updatedSnapshot.ifPresent(snapshot -> {
 						ProducerRecord<String, SensorsSnapshotAvro> producerRecord =
 								new ProducerRecord<>(TOPIC_SNAPSHOTS, null, snapshot.getHubId(), snapshot);
-						producer.send(producerRecord);
-						log.info("Снапшот отправлен для хаба: {}", snapshot.getHubId());
+
+						producer.send(producerRecord, (metadata, exception) -> {
+							if (exception != null) {
+								log.error("Не удалось отправить снапшот для хаба: {}", snapshot.getHubId(), exception);
+							} else {
+								log.info("Снапшот успешно записан для хаба: {} (partition: {}, offset: {})",
+										snapshot.getHubId(), metadata.partition(), metadata.offset());
+							}
+						});
 					});
 
 					manageOffsets(record, count, consumer);
@@ -92,13 +125,13 @@ public class AggregationStarter {
 		Properties props = new Properties();
 		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 		props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, SensorEventDeserializer.class.getName());
-		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-		props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "100");
-		props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, "300000");
-		props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, "3072000");
-		props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, "307200");
+		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, keyDeserializer);
+		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, valueDeserializer);
+		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
+		props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
+		props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);
+		props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, fetchMaxBytes);
+		props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, maxPartitionFetchBytes);
 		return new KafkaConsumer<>(props);
 	}
 

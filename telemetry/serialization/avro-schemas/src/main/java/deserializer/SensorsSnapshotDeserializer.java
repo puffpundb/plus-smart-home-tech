@@ -1,4 +1,4 @@
-package ru.yandex.practicum.analyzer.deserializer;
+package deserializer;
 
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
