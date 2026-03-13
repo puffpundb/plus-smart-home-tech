@@ -101,7 +101,7 @@ public class ScenarioService {
 
 		scenarioConditionRepository.deleteByScenarioId(scenarioId);
 		scenarioActionRepository.deleteByScenarioId(scenarioId);
-		scenarioRepository.delete(scenario);
+		scenarioRepository.deleteById(scenarioId);
 
 		log.info("Сценарий и все его связи удалены: id={}", scenarioId);
 	}

@@ -79,10 +79,12 @@ public class AggregationStarter {
 		KafkaConsumer<String, SensorEventAvro> consumer = createConsumer();
 		KafkaProducer<String, SensorsSnapshotAvro> producer = createProducer();
 
+		boolean flag = true;
+
 		try {
 			consumer.subscribe(Collections.singletonList(TOPIC_SENSORS));
 
-			while (true) {
+			while (flag) {
 				ConsumerRecords<String, SensorEventAvro> records = consumer.poll(POLL_TIMEOUT);
 
 				int count = 0;
@@ -111,6 +113,7 @@ public class AggregationStarter {
 				consumer.commitAsync(currentOffsets, commitCallback());
 			}
 		} catch (WakeupException ignored) {
+			flag = false;
 		} catch (Exception e) {
 			log.error("Ошибка во время обработки событий", e);
 		} finally {
