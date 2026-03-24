@@ -1,0 +1,27 @@
+server:
+  port: 0
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: aggregator-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: deserializer.SensorEventDeserializer
+      max-poll-records: 100
+      max-poll-interval-ms: 300000
+      poll-timeout: 1
+      commit-interval: 10
+      fetch-max-bytes: 3072000
+      max-partition-fetch-bytes: 307200
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: serializer.CommonSerializer
+  application:
+    name: aggregator
+
+kafka:
+  topics:
+    sensors: telemetry.sensors.v1
+    snapshots: telemetry.snapshots.v1
