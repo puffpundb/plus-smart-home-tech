@@ -34,7 +34,7 @@ public class CommonSerializer implements Serializer<SpecificRecordBase> {
 
 			return outputStream.toByteArray();
 		} catch (IOException e) {
-			throw new RuntimeException("Ошибка сериализации. topic: " + topic + ", exception: " + e);
+			throw new RuntimeException("Ошибка сериализации. topic: " + topic + ", ru.yandex.practicum.shopping_store.exception: " + e);
 		}
 	}
 

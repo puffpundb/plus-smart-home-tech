@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/smart_home_tech_db?currentSchema=warehouse
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        default_schema: warehouse
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
