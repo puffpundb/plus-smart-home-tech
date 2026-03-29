@@ -8,3 +8,12 @@ spring:
 grpc:
   server:
     port: 59091
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

@@ -15,3 +15,12 @@ spring:
     init:
       mode: always
       schema-locations: classpath:schema.sql
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

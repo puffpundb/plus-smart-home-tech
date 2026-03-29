@@ -22,3 +22,12 @@ kafka:
   topics:
     sensors: telemetry.sensors.v1
     snapshots: telemetry.snapshots.v1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
