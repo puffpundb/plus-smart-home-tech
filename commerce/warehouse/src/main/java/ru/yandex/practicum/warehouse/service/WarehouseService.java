@@ -4,7 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.warehouse.dto.*;
+import ru.yandex.practicum.interaction_api.dto.AddProductToWarehouseRequest;
+import ru.yandex.practicum.interaction_api.dto.AddressDto;
+import ru.yandex.practicum.interaction_api.dto.BookedProductsDto;
+import ru.yandex.practicum.interaction_api.dto.NewProductInWarehouseRequest;
+import ru.yandex.practicum.interaction_api.dto.ShoppingCartDto;
 import ru.yandex.practicum.warehouse.entity.WarehouseProductEntity;
 import ru.yandex.practicum.warehouse.exception.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.warehouse.exception.ProductInShoppingCartLowQuantityInWarehouse;
@@ -20,10 +24,12 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class WarehouseService {
+
 	private final WarehouseProductRepository repository;
 
 	private static final String[] ADDRESSES = {"ADDRESS_1", "ADDRESS_2"};
-	private static final String CURRENT_ADDRESS = ADDRESSES[new SecureRandom().nextInt(ADDRESSES.length)];
+	private static final String CURRENT_ADDRESS =
+			ADDRESSES[new SecureRandom().nextInt(ADDRESSES.length)];
 
 	@Transactional
 	public void newProductInWarehouse(NewProductInWarehouseRequest request) {

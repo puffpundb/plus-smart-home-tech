@@ -1,4 +1,4 @@
-package ru.yandex.practicum.warehouse.dto;
+package ru.yandex.practicum.interaction_api.dto;
 
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;

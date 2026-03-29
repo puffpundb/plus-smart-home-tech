@@ -20,6 +20,7 @@
         <module>infra</module>
         <module>commerce</module>
         <module>discovery-server</module>
+        <module>interaction-api</module>
     </modules>
 
     <properties>
