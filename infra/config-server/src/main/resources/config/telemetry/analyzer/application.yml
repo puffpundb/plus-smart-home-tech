@@ -1,14 +1,10 @@
 spring:
   datasource:
-#    url: jdbc:postgresql://localhost:5432/smart_home_tech_db?currentSchema=analyzer
     url: jdbc:postgresql://localhost:5432/smart_home_tech_db
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
   jpa:
-#    properties:
-#      hibernate:
-#        default_schema: analyzer
     hibernate:
       ddl-auto: validate
     show-sql: true

@@ -38,7 +38,6 @@ public class ShoppingStoreService {
 		Sort springSort = Sort.by(new Sort.Order(direction, property));
 		Pageable pageable = PageRequest.of(page, size, springSort);
 
-//		Page<ProductEntity> entityPage = productRepository.findByProductCategoryAndProductState(category, ProductState.ACTIVE, pageable);
 		Page<ProductEntity> entityPage = productRepository.findByProductCategory(category, pageable);
 
 		return ShoppingStoreMapper.toPageProductDtoFromEntity(entityPage);
