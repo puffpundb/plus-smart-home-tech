@@ -15,7 +15,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, UUID> {
 //															 ProductState state,
 //															 Pageable pageable);
 
-	Page<ProductEntity> findByProductCategoryAndProductState(ProductCategory category,
+	Page<ProductEntity> findByProductCategory(ProductCategory category,
 															 Pageable pageable);
 
 	Optional<ProductEntity> findByIdAndProductState(UUID id, ProductState state);

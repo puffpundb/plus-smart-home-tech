@@ -39,7 +39,7 @@ public class ShoppingStoreService {
 		Pageable pageable = PageRequest.of(page, size, springSort);
 
 //		Page<ProductEntity> entityPage = productRepository.findByProductCategoryAndProductState(category, ProductState.ACTIVE, pageable);
-		Page<ProductEntity> entityPage = productRepository.findByProductCategoryAndProductState(category, pageable);
+		Page<ProductEntity> entityPage = productRepository.findByProductCategory(category, pageable);
 
 		return ShoppingStoreMapper.toPageProductDtoFromEntity(entityPage);
 	}
