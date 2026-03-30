@@ -1,13 +1,14 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/smart_home_tech_db?currentSchema=shopping_cart
+#    url: jdbc:postgresql://localhost:5432/smart_home_tech_db?currentSchema=shopping_cart
+    url: jdbc:postgresql://localhost:5432/smart_home_tech_db
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
   jpa:
-    properties:
-      hibernate:
-        default_schema: shopping_cart
+#    properties:
+#      hibernate:
+#        default_schema: shopping_cart
     hibernate:
       ddl-auto: update
     show-sql: true
