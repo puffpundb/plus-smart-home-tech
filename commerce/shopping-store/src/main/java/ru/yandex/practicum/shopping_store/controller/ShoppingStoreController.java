@@ -27,7 +27,7 @@ public class ShoppingStoreController {
 	@GetMapping
 	public ResponseEntity<PageProductDto> getProducts(@RequestParam ProductCategory category,
 													  @RequestParam(required = false, defaultValue = "0") @Min(0) int page,
-													  @RequestParam(required = false, defaultValue = "20") @Min(1) @Max(100) int size,
+													  @RequestParam(required = false, defaultValue = "20") @Min(1) int size,
 													  @RequestParam(required = false) String sort) {
 		log.info("GET /api/v1/shopping-store?category={}", category);
 
