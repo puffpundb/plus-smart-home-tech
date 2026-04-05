@@ -17,8 +17,11 @@ import ru.yandex.practicum.warehouse.mapper.WarehouseMapper;
 import ru.yandex.practicum.warehouse.repository.WarehouseProductRepository;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -48,14 +51,24 @@ public class WarehouseService {
 		double totalVolume = 0.0;
 		boolean hasFragile = false;
 
-		for (Map.Entry<UUID, Long> entry : cart.getProducts().entrySet()) {
+		Map<UUID, Long> products = cart.getProducts();
+		List<UUID> productIds = new ArrayList<>(products.keySet());
+
+		List<WarehouseProductEntity> entities = repository.findAllById(productIds);
+
+		Map<UUID, WarehouseProductEntity> byId = entities.stream()
+				.collect(Collectors.toMap(WarehouseProductEntity::getProductId, e -> e));
+
+		for (Map.Entry<UUID, Long> entry : products.entrySet()) {
 			UUID productId = entry.getKey();
 			Long requestedQuantity = entry.getValue();
 
-			WarehouseProductEntity product = repository.findByProductId(productId)
-					.orElseThrow(() -> new NoSpecifiedProductInWarehouseException(
-							"Товар с ID " + productId + " не найден на складе"
-					));
+			WarehouseProductEntity product = byId.get(productId);
+			if (product == null) {
+				throw new NoSpecifiedProductInWarehouseException(
+						"Товар с ID " + productId + " не найден на складе"
+				);
+			}
 
 			if (product.getQuantity() < requestedQuantity) {
 				throw new ProductInShoppingCartLowQuantityInWarehouse(
@@ -67,7 +80,7 @@ public class WarehouseService {
 			totalWeight += product.getWeight() * requestedQuantity;
 			totalVolume += product.getWidth() * product.getHeight() * product.getDepth() * requestedQuantity;
 
-			if (product.getFragile()) {
+			if (Boolean.TRUE.equals(product.getFragile())) {
 				hasFragile = true;
 			}
 		}

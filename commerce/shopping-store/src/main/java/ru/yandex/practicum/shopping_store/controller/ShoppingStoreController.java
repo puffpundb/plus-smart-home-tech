@@ -1,9 +1,12 @@
 package ru.yandex.practicum.shopping_store.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.shopping_store.dto.PageProductDto;
 import ru.yandex.practicum.shopping_store.dto.ProductDto;
@@ -17,17 +20,17 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/shopping-store")
 @RequiredArgsConstructor
+@Validated
 public class ShoppingStoreController {
 	private final ShoppingStoreService shoppingStoreService;
 
 	@GetMapping
 	public ResponseEntity<PageProductDto> getProducts(@RequestParam ProductCategory category,
-													  @RequestParam(required = false, defaultValue = "0") int page,
-													  @RequestParam(required = false, defaultValue = "20") int size,
-													  @RequestParam(required = false) String[] sort) {
+													  @RequestParam(required = false, defaultValue = "0") @Min(0) int page,
+													  @RequestParam(required = false, defaultValue = "20") @Min(1) @Max(100) int size,
+													  @RequestParam(required = false) String sort) {
 		log.info("GET /api/v1/shopping-store?category={}", category);
 
-		if (sort == null || sort.length < 2) sort = new String[] {"productName", "ASC"};
 		return ResponseEntity.ok(shoppingStoreService.getProductsByCategory(category, page, size, sort));
 	}
 

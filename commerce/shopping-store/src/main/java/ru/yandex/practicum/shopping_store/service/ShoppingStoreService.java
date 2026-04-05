@@ -11,6 +11,7 @@ import ru.yandex.practicum.shopping_store.entity.ProductEntity;
 import ru.yandex.practicum.shopping_store.entity.enums.ProductCategory;
 import ru.yandex.practicum.shopping_store.entity.enums.ProductState;
 import ru.yandex.practicum.shopping_store.entity.enums.QuantityState;
+import ru.yandex.practicum.shopping_store.entity.enums.SortField;
 import ru.yandex.practicum.shopping_store.exception.ProductNotFoundException;
 import ru.yandex.practicum.shopping_store.mapper.ShoppingStoreMapper;
 import ru.yandex.practicum.shopping_store.repository.ProductRepository;
@@ -26,21 +27,42 @@ public class ShoppingStoreService {
 
 	private final ProductRepository productRepository;
 
-	@Transactional(readOnly = true)
-	public PageProductDto getProductsByCategory(ProductCategory category,
-												int page,
-												int size,
-												String[] sort) {
-
-		String property = sort[0];
-		Sort.Direction direction = Sort.Direction.fromString(sort[1]);
-
-		Sort springSort = Sort.by(new Sort.Order(direction, property));
+	@Transactional
+	public PageProductDto getProductsByCategory(ProductCategory category, int page, int size, String sort) {
+		Sort springSort = parseSortParameter(sort);
 		Pageable pageable = PageRequest.of(page, size, springSort);
 
 		Page<ProductEntity> entityPage = productRepository.findByProductCategory(category, pageable);
-
 		return ShoppingStoreMapper.toPageProductDtoFromEntity(entityPage);
+	}
+
+	private Sort parseSortParameter(String sort) {
+		if (sort == null || sort.isBlank()) {
+			return Sort.by(Sort.Direction.ASC, "productName");
+		}
+
+		List<Sort.Order> orders = new ArrayList<>();
+		String[] sortParts = sort.split(";");
+
+		for (String part : sortParts) {
+			String[] fieldAndDirection = part.trim().split(",");
+			if (fieldAndDirection.length != 2) {
+				continue;
+			}
+
+			String fieldStr = fieldAndDirection[0].trim();
+			String directionStr = fieldAndDirection[1].trim().toUpperCase();
+
+			SortField field = SortField.fromString(fieldStr);
+			Sort.Direction direction = Sort.Direction.fromString(directionStr);
+			orders.add(new Sort.Order(direction, field.getFieldName()));
+		}
+
+		if (orders.isEmpty()) {
+			return Sort.by(Sort.Direction.ASC, "productName");
+		}
+
+		return Sort.by(orders);
 	}
 
 	@Transactional(readOnly = true)
