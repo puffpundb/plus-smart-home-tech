@@ -4,12 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.interaction_api.dto.AddProductToWarehouseRequest;
-import ru.yandex.practicum.interaction_api.dto.AddressDto;
-import ru.yandex.practicum.interaction_api.dto.BookedProductsDto;
-import ru.yandex.practicum.interaction_api.dto.NewProductInWarehouseRequest;
-import ru.yandex.practicum.interaction_api.dto.ShoppingCartDto;
-import ru.yandex.practicum.interaction_api.warehouse.WarehouseApi;
+import ru.yandex.practicum.interaction_api.dto.*;
+import ru.yandex.practicum.interaction_api.feignApi.WarehouseApi;
 import ru.yandex.practicum.warehouse.service.WarehouseService;
 
 @Slf4j
@@ -42,5 +38,24 @@ public class WarehouseController implements WarehouseApi {
 	public AddressDto getWarehouseAddress() {
 		log.info("GET /api/v1/warehouse/address");
 		return warehouseService.getWarehouseAddress();
+	}
+
+	@Override
+	public void assemblyProductForOrderFromShoppingCart(@Valid ShoppingCartDto cart) {
+		log.info("POST /api/v1/warehouse/assembly - assembling order from cart: {}", cart.getShoppingCartId());
+		warehouseService.assemblyProductForOrderFromShoppingCart(cart);
+	}
+
+	@Override
+	public void shippedToDelivery(@Valid ShippedToDeliveryRequest request) {
+		log.info("POST /api/v1/warehouse/shipped - order {} linked to delivery {}",
+				request.getOrderId(), request.getDeliveryId());
+		warehouseService.shippedToDelivery(request);
+	}
+
+	@Override
+	public void returnProducts(@Valid ProductReturnRequest request) {
+		log.info("POST /api/v1/warehouse/return - returning products for order: {}", request.getOrderId());
+		warehouseService.returnProducts(request);
 	}
 }

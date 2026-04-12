@@ -4,11 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.interaction_api.dto.AddProductToWarehouseRequest;
-import ru.yandex.practicum.interaction_api.dto.AddressDto;
-import ru.yandex.practicum.interaction_api.dto.BookedProductsDto;
-import ru.yandex.practicum.interaction_api.dto.NewProductInWarehouseRequest;
-import ru.yandex.practicum.interaction_api.dto.ShoppingCartDto;
+import ru.yandex.practicum.interaction_api.dto.*;
 import ru.yandex.practicum.warehouse.entity.WarehouseProductEntity;
 import ru.yandex.practicum.warehouse.exception.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.warehouse.exception.ProductInShoppingCartLowQuantityInWarehouse;
@@ -106,5 +102,20 @@ public class WarehouseService {
 	@Transactional(readOnly = true)
 	public AddressDto getWarehouseAddress() {
 		return WarehouseMapper.toAddressDto(CURRENT_ADDRESS);
+	}
+
+	public void assemblyProductForOrderFromShoppingCart(ShoppingCartDto cart) {
+		// Логика: проверка остатков → резервирование → создание OrderBooking
+		log.debug("Reserving products for cart: {}", cart.getShoppingCartId());
+	}
+
+	public void shippedToDelivery(ShippedToDeliveryRequest request) {
+		// Логика: привязка deliveryId к заказу, смена статуса на "отгружен"
+		log.debug("Linking order {} to delivery {}", request.getOrderId(), request.getDeliveryId());
+	}
+
+	public void returnProducts(ProductReturnRequest request) {
+		// Логика: возврат остатков на склад, увеличение доступного количества
+		log.debug("Returning products for order: {}", request.getOrderId());
 	}
 }

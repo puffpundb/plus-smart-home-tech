@@ -1,4 +1,4 @@
-package ru.yandex.practicum.interaction_api.warehouse;
+package ru.yandex.practicum.interaction_api.feignApi;
 
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.interaction_api.dto.*;
@@ -16,4 +16,13 @@ public interface WarehouseApi {
 
 	@GetMapping("/api/v1/warehouse/address")
 	AddressDto getWarehouseAddress();
+
+	@PostMapping("/api/v1/warehouse/assembly")
+	void assemblyProductForOrderFromShoppingCart(@RequestBody ShoppingCartDto cart);
+
+	@PostMapping("/api/v1/warehouse/shipped")
+	void shippedToDelivery(@RequestBody ShippedToDeliveryRequest request);
+
+	@PostMapping("/api/v1/warehouse/return")
+	void returnProducts(@RequestBody ProductReturnRequest request);
 }
