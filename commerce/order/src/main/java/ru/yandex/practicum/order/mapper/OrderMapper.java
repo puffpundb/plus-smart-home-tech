@@ -14,9 +14,9 @@ public class OrderMapper {
 	public static OrderDto toDto(Order order) {
 		if (order == null) return null;
 
-		Map<String, Long> products = order.getItems().stream()
+		Map<UUID, Long> products = order.getItems().stream()
 				.collect(Collectors.toMap(
-						item -> item.getProductId().toString(),
+						OrderItem::getProductId,
 						OrderItem::getQuantity
 				));
 

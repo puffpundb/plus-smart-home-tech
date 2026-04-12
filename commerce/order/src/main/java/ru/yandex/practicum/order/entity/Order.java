@@ -14,10 +14,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "orders")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
 public class Order {
 	@Id
 	@Column(name = "order_id")
@@ -57,28 +54,14 @@ public class Order {
 	@Column(name = "product_price")
 	private Double productPrice;
 
-	@Column(name = "created_at", updatable = false)
-	private LocalDateTime createdAt;
-
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
-
 	@Builder.Default
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<OrderItem> items = new ArrayList<>();
 
 	@PrePersist
 	protected void onCreate() {
-		createdAt = LocalDateTime.now();
-		updatedAt = LocalDateTime.now();
-		if (orderId == null) {
-			orderId = UUID.randomUUID();
-		}
-	}
-
-	@PreUpdate
-	protected void onUpdate() {
-		updatedAt = LocalDateTime.now();
+		if (orderId == null) orderId = UUID.randomUUID();
+		if (state == null) state = OrderStatus.NEW;
 	}
 
 	public void addItem(OrderItem item) {

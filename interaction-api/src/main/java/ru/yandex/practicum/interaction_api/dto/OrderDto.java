@@ -16,7 +16,7 @@ import java.util.UUID;
 public class OrderDto {
 	private UUID orderId;
 	private UUID shoppingCartId;
-	private Map<String, Long> products;
+	private Map<UUID, Long> products;
 	private UUID paymentId;
 	private UUID deliveryId;
 	private OrderStatus state;
