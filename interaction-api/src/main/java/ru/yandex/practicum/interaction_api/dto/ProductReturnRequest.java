@@ -14,5 +14,5 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ProductReturnRequest {
 	private UUID orderId;
-	private Map<String, Long> products;
+	private Map<UUID, Long> products;
 }

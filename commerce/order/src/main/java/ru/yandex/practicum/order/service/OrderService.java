@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.interaction_api.dto.CreateNewOrderRequest;
-import ru.yandex.practicum.interaction_api.dto.OrderDto;
-import ru.yandex.practicum.interaction_api.dto.PaymentDto;
-import ru.yandex.practicum.interaction_api.dto.ProductReturnRequest;
+import ru.yandex.practicum.interaction_api.dto.*;
 import ru.yandex.practicum.interaction_api.enums.OrderStatus;
 import ru.yandex.practicum.order.client.DeliveryClient;
 import ru.yandex.practicum.order.client.PaymentClient;
@@ -18,7 +15,9 @@ import ru.yandex.practicum.order.mapper.OrderMapper;
 import ru.yandex.practicum.order.repository.OrderRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,13 +41,30 @@ public class OrderService {
 	public OrderDto createNewOrder(CreateNewOrderRequest request) {
 		log.info("Creating order for cart: {}", request.getShoppingCart().getShoppingCartId());
 
-		warehouseClient.assemblyProductForOrderFromShoppingCart(request.getShoppingCart());
-
 		Order order = OrderMapper.toEntity(request);
 		order.setState(OrderStatus.NEW);
-
 		Order savedOrder = orderRepository.save(order);
-		log.info("Order created successfully: {}", savedOrder.getOrderId());
+
+		AssemblyProductsForOrderRequest assemblyRequest = AssemblyProductsForOrderRequest.builder()
+				.orderId(savedOrder.getOrderId())
+				.products(request.getShoppingCart().getProducts())
+				.build();
+		warehouseClient.assemblyProductsForOrder(assemblyRequest);
+
+		AddressDto warehouseAddr = warehouseClient.getWarehouseAddress();
+
+		DeliveryDto deliveryRequest = DeliveryDto.builder()
+				.orderId(savedOrder.getOrderId())
+				.fromAddress(warehouseAddr)
+				.toAddress(request.getDeliveryAddress())
+				.build();
+
+		DeliveryDto plannedDelivery = deliveryClient.planDelivery(deliveryRequest);
+
+		savedOrder.setDeliveryId(plannedDelivery.getDeliveryId());
+		orderRepository.save(savedOrder);
+
+		log.info("Order created successfully: {}, deliveryId: {}", savedOrder.getOrderId(), plannedDelivery.getDeliveryId());
 		return OrderMapper.toDto(savedOrder);
 	}
 
@@ -117,6 +133,14 @@ public class OrderService {
 	}
 
 	@Transactional
+	public OrderDto paymentSuccess(UUID orderId) {
+		Order order = findOrderOrThrow(orderId);
+		order.setState(OrderStatus.PAID);
+		log.info("Order {} marked as PAID via paymentSuccess callback", orderId);
+		return OrderMapper.toDto(orderRepository.save(order));
+	}
+
+	@Transactional
 	public OrderDto delivery(UUID orderId) {
 		Order order = findOrderOrThrow(orderId);
 		order.setState(OrderStatus.DELIVERED);
@@ -144,7 +168,7 @@ public class OrderService {
 	public OrderDto productReturn(ProductReturnRequest request) {
 		Order order = findOrderOrThrow(request.getOrderId());
 
-		warehouseClient.returnProducts(request);
+		warehouseClient.acceptReturn(request.getProducts());
 
 		order.setState(OrderStatus.PRODUCT_RETURNED);
 		log.info("Return processed for order {}", request.getOrderId());

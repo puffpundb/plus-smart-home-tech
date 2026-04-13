@@ -8,11 +8,13 @@ import ru.yandex.practicum.interaction_api.dto.*;
 import ru.yandex.practicum.interaction_api.feignApi.WarehouseApi;
 import ru.yandex.practicum.warehouse.service.WarehouseService;
 
+import java.util.Map;
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 public class WarehouseController implements WarehouseApi {
-
 	private final WarehouseService warehouseService;
 
 	@Override
@@ -22,9 +24,28 @@ public class WarehouseController implements WarehouseApi {
 	}
 
 	@Override
-	public BookedProductsDto checkProductQuantityEnoughForShoppingCart(@Valid ShoppingCartDto cart) {
-		log.info("POST /api/v1/warehouse/check - checking cart: {}", cart.getShoppingCartId());
-		return warehouseService.checkProductQuantityEnoughForShoppingCart(cart);
+	public void shippedToDelivery(@Valid ShippedToDeliveryRequest request) {
+		log.info("POST /api/v1/warehouse/shipped - order {} linked to delivery {}",
+				request.getOrderId(), request.getDeliveryId());
+		warehouseService.shippedToDelivery(request);
+	}
+
+	@Override
+	public void acceptReturn(@Valid Map<UUID, Long> products) {
+		log.info("POST /api/v1/warehouse/return - accepting return for {} products", products.size());
+		warehouseService.acceptReturn(products);
+	}
+
+	@Override
+	public BookedProductsDto checkProductQuantityEnoughForShoppingCart(@Valid ShoppingCartDto shoppingCart) {
+		log.info("POST /api/v1/warehouse/check - checking cart: {}", shoppingCart.getShoppingCartId());
+		return warehouseService.checkProductQuantityEnoughForShoppingCart(shoppingCart);
+	}
+
+	@Override
+	public BookedProductsDto assemblyProductsForOrder(@Valid AssemblyProductsForOrderRequest request) {
+		log.info("POST /api/v1/warehouse/assembly - assembling order: {}", request.getOrderId());
+		return warehouseService.assemblyProductsForOrder(request);
 	}
 
 	@Override
@@ -38,24 +59,5 @@ public class WarehouseController implements WarehouseApi {
 	public AddressDto getWarehouseAddress() {
 		log.info("GET /api/v1/warehouse/address");
 		return warehouseService.getWarehouseAddress();
-	}
-
-	@Override
-	public void assemblyProductForOrderFromShoppingCart(@Valid ShoppingCartDto cart) {
-		log.info("POST /api/v1/warehouse/assembly - assembling order from cart: {}", cart.getShoppingCartId());
-		warehouseService.assemblyProductForOrderFromShoppingCart(cart);
-	}
-
-	@Override
-	public void shippedToDelivery(@Valid ShippedToDeliveryRequest request) {
-		log.info("POST /api/v1/warehouse/shipped - order {} linked to delivery {}",
-				request.getOrderId(), request.getDeliveryId());
-		warehouseService.shippedToDelivery(request);
-	}
-
-	@Override
-	public void returnProducts(@Valid ProductReturnRequest request) {
-		log.info("POST /api/v1/warehouse/return - returning products for order: {}", request.getOrderId());
-		warehouseService.returnProducts(request);
 	}
 }

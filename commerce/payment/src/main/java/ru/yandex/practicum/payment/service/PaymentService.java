@@ -16,12 +16,14 @@ import ru.yandex.practicum.payment.mapper.PaymentMapper;
 import ru.yandex.practicum.payment.repository.PaymentRepository;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentService {
+
 	private final PaymentRepository paymentRepository;
 	private final ShoppingStoreClient shoppingStoreClient;
 	private final OrderClient orderClient;
@@ -61,7 +63,6 @@ public class PaymentService {
 			throw new NotEnoughInfoInOrderToCalculateException("Не указана стоимость доставки");
 		}
 
-		// Алгоритм из ТЗ: (товары + 10% НДС) + доставка
 		Double fee = productPrice * 0.1;
 		Double total = productPrice + fee + deliveryPrice;
 
@@ -76,12 +77,10 @@ public class PaymentService {
 			throw new NotEnoughInfoInOrderToCalculateException("Отсутствует идентификатор заказа");
 		}
 
-		// Проверяем, не создана ли уже оплата
 		if (paymentRepository.findByOrderId(order.getOrderId()).isPresent()) {
 			throw new NotEnoughInfoInOrderToCalculateException("Оплата для заказа " + order.getOrderId() + " уже создана");
 		}
 
-		// Получаем или рассчитываем цены
 		Double productPrice = order.getProductPrice();
 		if (productPrice == null) {
 			productPrice = productCost(order);
@@ -92,11 +91,9 @@ public class PaymentService {
 			throw new NotEnoughInfoInOrderToCalculateException("Не указана стоимость доставки");
 		}
 
-		// Считаем НДС и итог
 		Double feeTotal = productPrice * 0.1;
 		Double totalPayment = productPrice + feeTotal + deliveryPrice;
 
-		// Создаём сущность оплаты
 		Payment payment = Payment.builder()
 				.orderId(order.getOrderId())
 				.status(PaymentStatus.PENDING)
@@ -123,8 +120,7 @@ public class PaymentService {
 		paymentRepository.save(payment);
 		log.info("Оплата {} переведена в статус SUCCESS", paymentId);
 
-		// Уведомляем сервис order об успешной оплате
-		orderClient.payment(payment.getOrderId());
+		orderClient.paymentSuccess(payment.getOrderId());
 	}
 
 	@Transactional
@@ -139,7 +135,24 @@ public class PaymentService {
 		paymentRepository.save(payment);
 		log.info("Оплата {} переведена в статус FAILED", paymentId);
 
-		// Уведомляем сервис order об ошибке оплаты
 		orderClient.paymentFailed(payment.getOrderId());
+	}
+
+	@Transactional
+	public void notifyOrderPaymentSuccess(UUID orderId) {
+		log.info("Оплата успешна {}", orderId);
+		orderClient.paymentSuccess(orderId);
+	}
+
+	@Transactional
+	public void notifyOrderPaymentFailed(UUID orderId) {
+		log.error("Оплата не успешна {}", orderId);
+		orderClient.paymentFailed(orderId);
+	}
+
+	@Transactional(readOnly = true)
+	public Double calculateProductsCost(Set<UUID> productIds) {
+		Map<UUID, Double> prices = shoppingStoreClient.getProductPrices(productIds);
+		return prices.values().stream().mapToDouble(Double::doubleValue).sum();
 	}
 }

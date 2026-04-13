@@ -18,7 +18,6 @@ import java.util.UUID;
 public class OrderController implements OrderApi {
 	private final OrderService orderService;
 
-
 	@Override
 	public List<OrderDto> getClientOrders(String username) {
 		log.info("GET /api/v1/order?username={}", username);
@@ -27,8 +26,7 @@ public class OrderController implements OrderApi {
 
 	@Override
 	public OrderDto createNewOrder(CreateNewOrderRequest request) {
-		log.info("PUT /api/v1/order - creating for cart: {}",
-				request.getShoppingCart().getShoppingCartId());
+		log.info("PUT /api/v1/order - creating for cart: {}", request.getShoppingCart().getShoppingCartId());
 		return orderService.createNewOrder(request);
 	}
 
@@ -48,6 +46,12 @@ public class OrderController implements OrderApi {
 	public OrderDto paymentFailed(UUID orderId) {
 		log.info("POST /api/v1/order/payment/failed - order: {}", orderId);
 		return orderService.paymentFailed(orderId);
+	}
+
+	@Override
+	public OrderDto paymentSuccess(UUID orderId) {
+		log.info("POST /api/v1/order/payment/success - order: {}", orderId);
+		return orderService.paymentSuccess(orderId);
 	}
 
 	@Override

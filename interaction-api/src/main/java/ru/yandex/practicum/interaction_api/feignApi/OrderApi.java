@@ -24,6 +24,9 @@ public interface OrderApi {
 	@PostMapping("/api/v1/order/payment/failed")
 	OrderDto paymentFailed(@RequestBody UUID orderId);
 
+	@PostMapping("/api/v1/order/payment/success")
+	OrderDto paymentSuccess(@RequestBody UUID orderId);
+
 	@PostMapping("/api/v1/order/delivery")
 	OrderDto delivery(@RequestBody UUID orderId);
 

@@ -4,7 +4,14 @@ import ru.yandex.practicum.interaction_api.dto.AddProductToWarehouseRequest;
 import ru.yandex.practicum.interaction_api.dto.AddressDto;
 import ru.yandex.practicum.interaction_api.dto.BookedProductsDto;
 import ru.yandex.practicum.interaction_api.dto.NewProductInWarehouseRequest;
+import ru.yandex.practicum.warehouse.entity.OrderBooking;
+import ru.yandex.practicum.warehouse.entity.OrderBookingItem;
 import ru.yandex.practicum.warehouse.entity.WarehouseProductEntity;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class WarehouseMapper {
 
@@ -20,21 +27,6 @@ public class WarehouseMapper {
 				.build();
 	}
 
-	public static WarehouseProductEntity toAddEntity(AddProductToWarehouseRequest request) {
-		return WarehouseProductEntity.builder()
-				.productId(request.getProductId())
-				.quantity(request.getQuantity())
-				.build();
-	}
-
-	public static BookedProductsDto toBookedProductsDto(WarehouseProductEntity entity, long quantity) {
-		return BookedProductsDto.builder()
-				.deliveryWeight(entity.getWeight() * quantity)
-				.deliveryVolume(entity.getWidth() * entity.getHeight() * entity.getDepth() * quantity)
-				.fragile(entity.getFragile())
-				.build();
-	}
-
 	public static AddressDto toAddressDto(String address) {
 		return AddressDto.builder()
 				.country(address)
@@ -43,5 +35,36 @@ public class WarehouseMapper {
 				.house(address)
 				.flat(address)
 				.build();
+	}
+
+	public static OrderBooking toBookingEntity(UUID orderId,
+											   Map<UUID, Long> products,
+											   List<WarehouseProductEntity> warehouseProducts,
+											   Double totalWeight,
+											   Double totalVolume,
+											   Boolean hasFragile) {
+
+		OrderBooking booking = OrderBooking.builder()
+				.orderId(orderId)
+				.totalWeight(totalWeight)
+				.totalVolume(totalVolume)
+				.hasFragile(hasFragile)
+				.items(new ArrayList<>())
+				.build();
+
+		for (Map.Entry<UUID, Long> entry : products.entrySet()) {
+			UUID productId = entry.getKey();
+			Long quantity = entry.getValue();
+
+			OrderBookingItem item = OrderBookingItem.builder()
+					.booking(booking)
+					.productId(productId)
+					.quantity(quantity)
+					.build();
+
+			booking.getItems().add(item);
+		}
+
+		return booking;
 	}
 }
