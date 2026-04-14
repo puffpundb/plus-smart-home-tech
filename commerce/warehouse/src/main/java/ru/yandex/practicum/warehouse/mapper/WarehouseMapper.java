@@ -1,8 +1,6 @@
 package ru.yandex.practicum.warehouse.mapper;
 
-import ru.yandex.practicum.interaction_api.dto.AddProductToWarehouseRequest;
 import ru.yandex.practicum.interaction_api.dto.AddressDto;
-import ru.yandex.practicum.interaction_api.dto.BookedProductsDto;
 import ru.yandex.practicum.interaction_api.dto.NewProductInWarehouseRequest;
 import ru.yandex.practicum.warehouse.entity.OrderBooking;
 import ru.yandex.practicum.warehouse.entity.OrderBookingItem;

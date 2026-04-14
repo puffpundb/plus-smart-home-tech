@@ -5,8 +5,6 @@ import ru.yandex.practicum.interaction_api.dto.AddressDto;
 import ru.yandex.practicum.interaction_api.dto.DeliveryDto;
 import ru.yandex.practicum.interaction_api.enums.DeliveryState;
 
-import java.util.UUID;
-
 public class DeliveryMapper {
 	public static DeliveryDto toDto(Delivery delivery) {
 		if (delivery == null) return null;

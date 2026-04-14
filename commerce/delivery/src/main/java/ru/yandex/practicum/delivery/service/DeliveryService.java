@@ -15,6 +15,7 @@ import ru.yandex.practicum.interaction_api.dto.OrderDto;
 import ru.yandex.practicum.interaction_api.dto.ShippedToDeliveryRequest;
 import ru.yandex.practicum.interaction_api.enums.DeliveryState;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
@@ -24,6 +25,14 @@ public class DeliveryService {
 	private final DeliveryRepository deliveryRepository;
 	private final OrderClient orderClient;
 	private final WarehouseClient warehouseClient;
+
+	private static final BigDecimal BASE_COST = BigDecimal.valueOf(5.0);
+	private static final BigDecimal WAREHOUSE_FACTOR_ADDRESS_1 = BigDecimal.ONE;
+	private static final BigDecimal WAREHOUSE_FACTOR_ADDRESS_2 = BigDecimal.valueOf(2);
+	private static final BigDecimal FRAGILE_SURCHARGE_RATE = BigDecimal.valueOf(0.2);
+	private static final BigDecimal WEIGHT_RATE = BigDecimal.valueOf(0.3);
+	private static final BigDecimal VOLUME_RATE = BigDecimal.valueOf(0.2);
+	private static final BigDecimal DIFFERENT_STREET_SURCHARGE_RATE = BigDecimal.valueOf(0.2);
 
 	@Transactional
 	public DeliveryDto planDelivery(DeliveryDto dto) {
@@ -35,35 +44,32 @@ public class DeliveryService {
 
 	@Transactional(readOnly = true)
 	public Double calculateDeliveryCost(OrderDto order) {
-		double baseCost = 5.0;
-		double sum = baseCost;
+		Delivery delivery = deliveryRepository.findByOrderId(order.getOrderId())
+				.orElseThrow(() -> new NoDeliveryFoundException("Доставка для заказа " + order.getOrderId() + " не найдена"));
 
-		int warehouseFactor = 1;
-		sum = (sum * warehouseFactor) + baseCost;
+		BigDecimal sum = BASE_COST;
 
-		if (Boolean.TRUE.equals(order.getFragile())) {
-			sum = sum + (sum * 0.2);
+		BigDecimal warehouseFactor;
+		if (delivery.getFromCity() != null && delivery.getFromCity().contains("ADDRESS_2")) {
+			warehouseFactor = WAREHOUSE_FACTOR_ADDRESS_2;
+		} else {
+			warehouseFactor = WAREHOUSE_FACTOR_ADDRESS_1;
 		}
+		sum = sum.add(sum.multiply(warehouseFactor));
 
-		double weight = 0.0;
-		if (order.getDeliveryWeight() != null) {
-			weight = order.getDeliveryWeight();
-		}
-		sum = sum + (weight * 0.3);
+		if (Boolean.TRUE.equals(delivery.getFragile())) sum = sum.add(sum.multiply(FRAGILE_SURCHARGE_RATE));
 
-		double volume = 0.0;
-		if (order.getDeliveryVolume() != null) {
-			volume = order.getDeliveryVolume();
-		}
-		sum = sum + (volume * 0.2);
+		sum = sum.add(BigDecimal.valueOf(delivery.getWeight()).multiply(WEIGHT_RATE));
 
-		boolean sameStreet = false;
-		if (!sameStreet) {
-			sum = sum + (sum * 0.2);
-		}
+		sum = sum.add(BigDecimal.valueOf(delivery.getVolume()).multiply(VOLUME_RATE));
+
+		String fromStreet = delivery.getFromStreet();
+		String toStreet = delivery.getToStreet();
+
+		if (!fromStreet.equals(toStreet)) sum = sum.add(sum.multiply(DIFFERENT_STREET_SURCHARGE_RATE));
 
 		log.info("Рассчитана стоимость доставки для заказа {}: {}", order.getOrderId(), sum);
-		return sum;
+		return sum.doubleValue();
 	}
 
 	@Transactional

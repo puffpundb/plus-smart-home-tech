@@ -1,13 +1,13 @@
 package ru.yandex.practicum.shopping_store.entity;
 
-import ru.yandex.practicum.shopping_store.entity.enums.ProductCategory;
-import ru.yandex.practicum.shopping_store.entity.enums.ProductState;
-import ru.yandex.practicum.shopping_store.entity.enums.QuantityState;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.yandex.practicum.shopping_store.entity.enums.ProductCategory;
+import ru.yandex.practicum.shopping_store.entity.enums.ProductState;
+import ru.yandex.practicum.shopping_store.entity.enums.QuantityState;
 
 import java.math.BigDecimal;
 import java.util.UUID;

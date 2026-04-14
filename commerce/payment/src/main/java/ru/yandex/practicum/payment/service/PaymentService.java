@@ -15,6 +15,7 @@ import ru.yandex.practicum.payment.exception.NotEnoughInfoInOrderToCalculateExce
 import ru.yandex.practicum.payment.mapper.PaymentMapper;
 import ru.yandex.practicum.payment.repository.PaymentRepository;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -23,10 +24,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentService {
-
 	private final PaymentRepository paymentRepository;
 	private final ShoppingStoreClient shoppingStoreClient;
 	private final OrderClient orderClient;
+
+	private static final BigDecimal FEE_RATE = BigDecimal.valueOf(0.1);
 
 	@Transactional(readOnly = true)
 	public Double productCost(OrderDto order) {
@@ -36,7 +38,7 @@ public class PaymentService {
 
 		Map<UUID, Double> prices = shoppingStoreClient.getProductPrices(order.getProducts().keySet());
 
-		double total = 0.0;
+		BigDecimal total = BigDecimal.ZERO;
 		for (Map.Entry<UUID, Long> entry : order.getProducts().entrySet()) {
 			UUID productId = entry.getKey();
 			Long quantity = entry.getValue();
@@ -44,31 +46,34 @@ public class PaymentService {
 			if (price == null) {
 				throw new NotEnoughInfoInOrderToCalculateException("Цена товара " + productId + " не найдена");
 			}
-			total += price * quantity;
+			total = total.add(BigDecimal.valueOf(price).multiply(BigDecimal.valueOf(quantity)));
 		}
 
 		log.info("Рассчитана стоимость товаров для заказа {}: {}", order.getOrderId(), total);
-		return total;
+		return total.doubleValue();
 	}
 
 	@Transactional(readOnly = true)
 	public Double getTotalCost(OrderDto order) {
-		Double productPrice = order.getProductPrice();
-		if (productPrice == null) {
-			productPrice = productCost(order);
+		BigDecimal productPrice;
+		if (order.getProductPrice() != null) {
+			productPrice = BigDecimal.valueOf(order.getProductPrice());
+		} else {
+			productPrice = BigDecimal.valueOf(productCost(order));
 		}
 
-		Double deliveryPrice = order.getDeliveryPrice();
-		if (deliveryPrice == null) {
+		if (order.getDeliveryPrice() == null) {
 			throw new NotEnoughInfoInOrderToCalculateException("Не указана стоимость доставки");
 		}
+		BigDecimal deliveryPrice = BigDecimal.valueOf(order.getDeliveryPrice());
 
-		Double fee = productPrice * 0.1;
-		Double total = productPrice + fee + deliveryPrice;
+		BigDecimal fee = productPrice.multiply(FEE_RATE);
+
+		BigDecimal total = productPrice.add(fee).add(deliveryPrice);
 
 		log.info("Рассчитана итоговая стоимость для заказа {}: товары={}, доставка={}, НДС={}, итого={}",
 				order.getOrderId(), productPrice, deliveryPrice, fee, total);
-		return total;
+		return total.doubleValue();
 	}
 
 	@Transactional
@@ -116,11 +121,11 @@ public class PaymentService {
 					return new NoOrderFoundException("Оплата с ID " + paymentId + " не найдена");
 				});
 
+		orderClient.paymentSuccess(payment.getOrderId());
+
 		payment.setStatus(PaymentStatus.SUCCESS);
 		paymentRepository.save(payment);
 		log.info("Оплата {} переведена в статус SUCCESS", paymentId);
-
-		orderClient.paymentSuccess(payment.getOrderId());
 	}
 
 	@Transactional

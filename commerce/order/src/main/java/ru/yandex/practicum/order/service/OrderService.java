@@ -15,9 +15,7 @@ import ru.yandex.practicum.order.mapper.OrderMapper;
 import ru.yandex.practicum.order.repository.OrderRepository;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -62,7 +60,8 @@ public class OrderService {
 		DeliveryDto plannedDelivery = deliveryClient.planDelivery(deliveryRequest);
 
 		savedOrder.setDeliveryId(plannedDelivery.getDeliveryId());
-		orderRepository.save(savedOrder);
+//		orderRepository.save(savedOrder); Нашел информацию, что Hibernate должен сделать UPDATE после транзакции
+//		если найдет расхождения в объектах. Иначе не совсем понимаю как избавиться. У меня UUID генерируется на уровне БД
 
 		log.info("Order created successfully: {}, deliveryId: {}", savedOrder.getOrderId(), plannedDelivery.getDeliveryId());
 		return OrderMapper.toDto(savedOrder);
@@ -107,8 +106,18 @@ public class OrderService {
 		Double totalCost = paymentClient.getTotalCost(orderDto);
 		order.setTotalPrice(totalCost);
 
-		log.info("Total cost calculated for order {}: product={}, total={}", orderId, productCost, totalCost);
-		return OrderMapper.toDto(orderRepository.save(order));
+		orderDto.setProductPrice(productCost);
+		orderDto.setTotalPrice(totalCost);
+
+		PaymentDto paymentResult = paymentClient.payment(orderDto);
+
+		order.setPaymentId(paymentResult.getPaymentId());
+
+		log.info("Total cost calculated for order {}: product={}, total={}, paymentId={}",
+				orderId, productCost, totalCost, paymentResult.getPaymentId());
+
+		Order savedOrder = orderRepository.save(order);
+		return OrderMapper.toDto(savedOrder);
 	}
 
 	@Transactional

@@ -2,12 +2,11 @@ package ru.yandex.practicum.shopping_cart.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.shopping_cart.dto.ChangeProductQuantityRequest;
 import ru.yandex.practicum.interaction_api.dto.ShoppingCartDto;
+import ru.yandex.practicum.shopping_cart.dto.ChangeProductQuantityRequest;
 import ru.yandex.practicum.shopping_cart.service.ShoppingCartService;
 
 import java.util.List;

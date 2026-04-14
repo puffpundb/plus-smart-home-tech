@@ -7,8 +7,6 @@ import org.springframework.data.repository.query.Param;
 import ru.yandex.practicum.analyzer.entity.ScenarioCondition;
 import ru.yandex.practicum.analyzer.entity.keys.ScenarioConditionId;
 
-import java.util.List;
-
 public interface ScenarioConditionRepository extends JpaRepository<ScenarioCondition, ScenarioConditionId> {
 	@Modifying
 	@Query("DELETE FROM ScenarioCondition c WHERE c.id.scenarioId = :scenarioId")

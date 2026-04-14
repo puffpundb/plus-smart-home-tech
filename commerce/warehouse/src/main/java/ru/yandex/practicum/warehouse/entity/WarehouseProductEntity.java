@@ -1,9 +1,11 @@
 package ru.yandex.practicum.warehouse.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-import java.math.BigDecimal;
-import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.UUID;
 
 @Entity

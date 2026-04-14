@@ -1,6 +1,9 @@
 package ru.yandex.practicum.interaction_api.feignApi;
 
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.interaction_api.dto.*;
 
 import java.util.Map;

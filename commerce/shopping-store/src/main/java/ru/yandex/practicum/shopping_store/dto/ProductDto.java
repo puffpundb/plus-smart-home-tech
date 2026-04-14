@@ -1,8 +1,5 @@
 package ru.yandex.practicum.shopping_store.dto;
 
-import ru.yandex.practicum.shopping_store.entity.enums.ProductCategory;
-import ru.yandex.practicum.shopping_store.entity.enums.ProductState;
-import ru.yandex.practicum.shopping_store.entity.enums.QuantityState;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,6 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.yandex.practicum.shopping_store.entity.enums.ProductCategory;
+import ru.yandex.practicum.shopping_store.entity.enums.ProductState;
+import ru.yandex.practicum.shopping_store.entity.enums.QuantityState;
 
 import java.math.BigDecimal;
 import java.util.UUID;
